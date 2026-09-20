@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0866d6">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <title>EntregasBox</title>
 
 <link rel="preconnect" href="https://unpkg.com">
@@ -128,11 +131,15 @@ button{cursor:pointer}
   background:#eaf3ff;color:var(--blue);font-size:18px
 }
 .mapbox{
-  width:100%;height:275px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
-  margin-top:9px;background:#e7eef7;position:relative
+  width:100%;height:275px;min-height:275px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  margin-top:9px;background:#e7eef7;position:relative;display:block;contain:layout paint;
 }
-.leaflet-container{width:100%;height:100%;background:#e7eef7;font:inherit}
-.leaflet-tile{max-width:none !important}
+.leaflet-container{width:100% !important;height:100% !important;min-height:100% !important;background:#e7eef7;font:inherit;overflow:hidden}
+.leaflet-pane,.leaflet-map-pane,.leaflet-tile-pane,.leaflet-overlay-pane,.leaflet-marker-pane,.leaflet-shadow-pane,.leaflet-marker-icon,.leaflet-marker-shadow{position:absolute}
+.leaflet-tile{max-width:none !important;max-height:none !important;width:256px !important;height:256px !important}
+.leaflet-tile-container{position:absolute;left:0;top:0}
+.leaflet-control-container{position:absolute;inset:0;pointer-events:none}
+.leaflet-control-container .leaflet-control{pointer-events:auto}
 .map-actions{display:flex;gap:8px;margin-top:8px}
 .secondary{
   flex:1;border:1px solid #cbd9e9;background:#edf5ff;color:var(--blue);
@@ -432,12 +439,16 @@ button{cursor:pointer}
   }
   function refreshMapSize(map){
     if(!map) return;
-    const refresh=()=>{ try{ map.invalidateSize({pan:false,animate:false}); }catch(e){} };
-    requestAnimationFrame(refresh);
-    setTimeout(refresh,80);
-    setTimeout(refresh,250);
-    setTimeout(refresh,600);
-    setTimeout(refresh,1000);
+    const refresh=()=>{
+      try{
+        const el=map.getContainer();
+        if(el){ el.style.width='100%'; el.style.height='100%'; }
+        map.invalidateSize({pan:false,animate:false});
+        map.eachLayer(layer=>{ if(layer instanceof L.TileLayer) layer.redraw(); });
+      }catch(e){}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(refresh));
+    [80,180,350,700,1200,2000].forEach(ms=>setTimeout(refresh,ms));
   }
 
   function showScreen(name){
@@ -719,6 +730,12 @@ button{cursor:pointer}
   window.addEventListener('orientationchange',()=>setTimeout(()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); },150));
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ refreshMapSize(newMap); refreshMapSize(detailMap); } });
   window.addEventListener('pageshow',()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); });
+  if(window.ResizeObserver){
+    const ro=new ResizeObserver(()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); });
+    window.addEventListener('load',()=>{
+      document.querySelectorAll('.mapbox').forEach(el=>ro.observe(el));
+    });
+  }
 
   // First-use profile prompt
   if(!profile.name){
