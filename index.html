@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0866d6">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<title>EntregasBox</title>
+
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root{
+  --blue:#0866d6;
+  --blue2:#0b7cff;
+  --blueDark:#064a9d;
+  --orange:#ff8a00;
+  --orange2:#ffad32;
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#10233f;
+  --muted:#6f7d91;
+  --line:#dfe7f1;
+  --danger:#e53935;
+  --shadow:0 8px 24px rgba(12,52,100,.10);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{min-height:100vh}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:620px;margin:0 auto;min-height:100vh;background:var(--bg)}
+.header{
+  background:linear-gradient(135deg,var(--blueDark),var(--blue2));
+  color:#fff;padding:18px 16px 22px;
+  border-radius:0 0 24px 24px;
+  box-shadow:0 5px 18px rgba(8,102,214,.25);
+}
+.topbar{display:flex;align-items:center;gap:10px}
+.logo{
+  width:48px;height:48px;border-radius:15px;background:#fff;color:var(--orange);
+  display:grid;place-items:center;font-size:27px;font-weight:900;flex:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.12)
+}
+.brand{flex:1;min-width:0}
+.brand h1{margin:0;font-size:25px;line-height:1;font-weight:800;letter-spacing:-.6px}
+.brand h1 span{color:#ff9a14}
+.brand p{margin:5px 0 0;font-size:12px;opacity:.88}
+.icon-btn{
+  width:40px;height:40px;border:0;border-radius:13px;background:rgba(255,255,255,.15);
+  color:#fff;display:grid;place-items:center;font-size:20px
+}
+.icon-btn:active,.primary:active,.secondary:active,.danger:active{transform:scale(.98)}
+.share-small{font-size:19px}
+.content{padding:14px 14px 96px}
+.greeting{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)
+}
+.avatar{
+  width:48px;height:48px;border-radius:50%;background:#e9f2ff;color:var(--blue);
+  display:grid;place-items:center;font-size:23px;flex:none
+}
+.greeting strong{display:block;font-size:16px}
+.greeting small{color:var(--muted);display:block;margin-top:3px}
+.datebox{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
+.datebox b{display:block;color:var(--text);font-size:13px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.stat{
+  background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:11px
+}
+.stat-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:#e9f2ff;color:var(--blue)}
+.stat:nth-child(2) .stat-icon{background:#fff1df;color:var(--orange)}
+.stat b{display:block;font-size:20px;line-height:1.1}
+.stat span{font-size:11px;color:var(--muted)}
+.primary{
+  width:100%;border:0;border-radius:16px;padding:16px;background:linear-gradient(135deg,var(--blue2),var(--blue));
+  color:#fff;font-weight:800;font-size:17px;box-shadow:0 7px 16px rgba(8,102,214,.24)
+}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 3px 9px}
+.section-title h2{font-size:17px;margin:0}
+.link-btn{border:0;background:none;color:var(--blue);font-weight:700;font-size:13px}
+.delivery-list{display:grid;gap:9px}
+.delivery-card{
+  background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;
+  box-shadow:0 4px 14px rgba(12,52,100,.06);display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center
+}
+.pin{width:42px;height:42px;border-radius:13px;background:#eaf3ff;color:var(--blue);display:grid;place-items:center;font-size:21px}
+.delivery-card h3{font-size:14px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.delivery-card p{margin:0;color:var(--muted);font-size:11px}
+.delivery-card .amount{font-size:14px;font-weight:800;color:#16803a;text-align:right}
+.delivery-card .time{font-size:10px;color:var(--muted);margin-top:4px;text-align:right}
+.empty{
+  background:#fff;border:1px dashed #cbd7e5;border-radius:16px;padding:25px 16px;
+  text-align:center;color:var(--muted)
+}
+
+/* screens */
+.screen{display:none}
+.screen.active{display:block}
+.backbar{
+  background:linear-gradient(135deg,var(--blueDark),var(--blue2));color:#fff;
+  padding:14px 16px;display:flex;align-items:center;gap:10px
+}
+.backbar h2{margin:0;font-size:19px;flex:1}
+.back{border:0;background:transparent;color:#fff;font-size:25px;padding:2px 6px}
+.form-card{
+  background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;
+  box-shadow:var(--shadow);margin-bottom:12px
+}
+.field{margin-bottom:13px}
+.field:last-child{margin-bottom:0}
+.label{font-weight:800;font-size:13px;margin:0 0 7px;display:flex;align-items:center;gap:6px}
+.req{color:var(--danger)}
+.input{
+  width:100%;border:1px solid #d3deea;border-radius:13px;padding:13px 14px;
+  outline:none;background:#fbfdff;color:var(--text);font-size:15px
+}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,102,214,.10)}
+.input-wrap{position:relative}
+.input-wrap .input{padding-right:46px}
+.search-btn{
+  position:absolute;right:6px;top:6px;width:38px;height:38px;border:0;border-radius:10px;
+  background:#eaf3ff;color:var(--blue);font-size:18px
+}
+.mapbox{
+  width:100%;height:275px;min-height:275px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  margin-top:9px;background:#e7eef7;position:relative;display:block;contain:layout paint;box-sizing:border-box;visibility:visible;opacity:1;
+}
+.leaflet-container{width:100% !important;height:100% !important;min-height:100% !important;background:#e7eef7;font:inherit;overflow:hidden}
+.leaflet-pane,.leaflet-map-pane,.leaflet-tile-pane,.leaflet-overlay-pane,.leaflet-marker-pane,.leaflet-shadow-pane,.leaflet-marker-icon,.leaflet-marker-shadow{position:absolute}
+.leaflet-tile{max-width:none !important;max-height:none !important;width:256px !important;height:256px !important}
+.leaflet-tile-container{position:absolute;left:0;top:0}
+.leaflet-control-container{position:absolute;inset:0;pointer-events:none}
+.leaflet-control-container .leaflet-control{pointer-events:auto}
+.map-actions{display:flex;gap:8px;margin-top:8px}
+.secondary{
+  flex:1;border:1px solid #cbd9e9;background:#edf5ff;color:var(--blue);
+  border-radius:12px;padding:11px 10px;font-weight:750;font-size:12px
+}
+.save-row{margin-top:5px}
+.amount-input{font-size:21px;font-weight:800}
+.auto-date{background:#eef3f8;color:#53647a}
+.form-note{font-size:11px;color:var(--muted);margin:7px 2px 0}
+.list-tools{display:flex;gap:8px;margin-bottom:10px}
+.list-tools .input{flex:1}
+.export{
+  border:0;background:#eaf3ff;color:var(--blue);border-radius:12px;padding:0 13px;font-weight:800
+}
+.delete{
+  border:0;background:#fff0f0;color:var(--danger);width:38px;height:38px;border-radius:11px;font-size:18px
+}
+.delivery-map-card{padding:0;overflow:hidden}
+.delivery-map-card .mapbox{margin:0;height:230px;border:0;border-radius:20px 20px 0 0}
+.delivery-map-info{padding:14px}
+.delivery-map-info h3{margin:0 0 5px;font-size:16px}
+.delivery-map-info p{margin:0;color:var(--muted);font-size:12px}
+.row{display:flex;gap:8px;margin-top:11px}
+.row>*{flex:1}
+.danger{border:1px solid #ffcaca;background:#fff2f2;color:var(--danger);border-radius:12px;padding:12px;font-weight:800}
+.menu{
+  position:fixed;z-index:50;top:70px;right:max(12px,calc((100vw - 620px)/2 + 12px));
+  width:235px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 45px rgba(10,38,75,.20);
+  padding:7px;display:none
+}
+.menu.show{display:block}
+.menu button{width:100%;border:0;background:#fff;text-align:left;padding:13px;border-radius:11px;color:var(--text);font-weight:700}
+.menu button:hover{background:#f1f6fc}
+.menu .danger-item{color:var(--danger)}
+.bottom{
+  position:fixed;z-index:40;bottom:0;left:50%;transform:translateX(-50%);
+  width:min(620px,100%);background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);
+  padding:7px 7px calc(7px + env(safe-area-inset-bottom))
+}
+.nav-btn{border:0;background:none;color:#68778b;font-size:10px;font-weight:700;padding:5px 3px;border-radius:12px}
+.nav-btn .ico{display:block;font-size:20px;line-height:22px;margin-bottom:2px}
+.nav-btn.active{color:var(--blue);background:#edf5ff}
+ .app-footer{
+  text-align:center;
+  padding:18px 12px 96px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
+.app-footer strong{color:var(--text);font-weight:700}
+.toast{
+  position:fixed;z-index:100;left:50%;bottom:82px;transform:translate(-50%,20px);
+  background:#142238;color:#fff;padding:12px 16px;border-radius:13px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,20,45,.45);z-index:80;display:none;padding:20px;align-items:center;justify-content:center
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:min(440px,100%);background:#fff;border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)
+}
+.modal h3{margin:0 0 8px}
+.modal p{font-size:13px;color:var(--muted);line-height:1.45}
+.modal-actions{display:flex;gap:8px;margin-top:14px}
+.modal-actions button{flex:1}
+@media(max-width:380px){
+  .brand h1{font-size:22px}
+  .delivery-card{grid-template-columns:38px 1fr auto}
+  .pin{width:38px;height:38px}
+  .mapbox{height:240px}
+}
+</style>
+<style id="entregasbox-mapbox-fix">#newMap,#detailMap{display:block!important;width:100%!important;min-height:275px!important;height:275px!important;visibility:visible!important;opacity:1!important;overflow:hidden!important;position:relative!important;background:#e7eef7!important}#detailMap{min-height:230px!important;height:230px!important}</style></head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="topbar">
+      <div class="logo">📦</div>
+      <div class="brand">
+        <h1>Entregas<span>Box</span></h1>
+        <p>Suas entregas na palma da mão, sem complicação.</p>
+      </div>
+      <button class="icon-btn share-small" id="shareAppBtn" aria-label="Compartilhar app">↗</button>
+      <button class="icon-btn" id="menuBtn" aria-label="Mais opções">⋮</button>
+    </div>
+  </header>
+
+  <div class="menu" id="menu">
+    <button id="editProfileBtn">👤 Dados do entregador</button>
+    <button id="allDeliveriesBtn">📋 Todas as entregas</button>
+    <button id="exportMenuBtn">📤 Exportar entregas</button>
+    <button id="aboutBtn">ℹ️ Sobre o EntregasBox</button>
+  </div>
+
+  <main class="content">
+    <!-- HOME -->
+    <section class="screen active" id="homeScreen">
+      <div class="greeting">
+        <div class="avatar">👤</div>
+        <div>
+          <strong id="helloName">Olá, Entregador!</strong>
+          <small id="driverNameLine">Cadastre seu nome para começar.</small>
+        </div>
+        <div class="datebox">
+          <b id="todayDate"></b>
+          <span id="todayDay"></span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-icon">📦</div>
+          <div><b id="todayCount">0</b><span>Entregas hoje</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-icon">💰</div>
+          <div><b id="todayTotal">R$ 0,00</b><span>Total do dia</span></div>
+        </div>
+      </div>
+
+      <button class="primary" id="newDeliveryBtn">＋ Nova Entrega</button>
+
+      <div class="section-title">
+        <h2>Últimas entregas</h2>
+        <button class="link-btn" id="seeAllBtn">Ver todas ›</button>
+      </div>
+      <div class="delivery-list" id="recentList"></div>
+    </section>
+
+    <!-- NEW -->
+    <section class="screen" id="newScreen">
+      <div class="backbar">
+        <button class="back" id="backFromNew">‹</button>
+        <h2>Nova Entrega</h2>
+      </div>
+      <div class="content" style="padding-top:12px">
+        <div class="form-card">
+          <div class="field">
+            <div class="label">📍 Endereço da entrega <span class="req">*</span></div>
+            <div class="input-wrap">
+              <input class="input" id="addressInput" autocomplete="street-address" placeholder="Digite o endereço aqui...">
+              <button class="search-btn" id="searchAddressBtn" aria-label="Localizar endereço">⌕</button>
+            </div>
+            <div class="mapbox" id="newMap"></div>
+            <div class="map-actions">
+              <button class="secondary" id="locateMeBtn">◎ Usar minha localização</button>
+              <button class="secondary" id="openMapsBtn">↗ Abrir no Maps</button>
+            </div>
+            <div class="form-note">Digite o endereço e toque na lupa para colocar o ponto no mapa.</div>
+          </div>
+
+          <div class="field">
+            <div class="label">💰 Valor da entrega <span class="req">*</span></div>
+            <input class="input amount-input" id="amountInput" inputmode="decimal" placeholder="R$ 0,00">
+          </div>
+
+          <div class="field">
+            <div class="label">📅 Data e hora</div>
+            <input class="input auto-date" id="dateInput" readonly>
+          </div>
+
+          <div class="save-row">
+            <button class="primary" id="saveDeliveryBtn">✓ Salvar Entrega</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALL -->
+    <section class="screen" id="allScreen">
+      <div class="backbar">
+        <button class="back" id="backFromAll">‹</button>
+        <h2>Minhas Entregas</h2>
+      </div>
+      <div class="content" style="padding-top:12px">
+        <div class="list-tools">
+          <input class="input" id="filterInput" placeholder="🔎 Pesquisar endereço...">
+          <button class="export" id="exportBtn">↥</button>
+        </div>
+        <div class="delivery-list" id="allList"></div>
+      </div>
+    </section>
+
+    <!-- DETAILS -->
+    <section class="screen" id="detailsScreen">
+      <div class="backbar">
+        <button class="back" id="backFromDetails">‹</button>
+        <h2>Detalhes da entrega</h2>
+      </div>
+      <div class="content" style="padding-top:12px">
+        <div class="form-card delivery-map-card">
+          <div class="mapbox" id="detailMap"></div>
+          <div class="delivery-map-info">
+            <h3 id="detailAddress"></h3>
+            <p id="detailMeta"></p>
+            <p id="detailAmount" style="font-size:18px;font-weight:800;color:#16803a;margin-top:8px"></p>
+            <div class="row">
+              <button class="secondary" id="detailOpenMaps">↗ Abrir no Maps</button>
+              <button class="danger" id="detailDelete">🗑 Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+    <footer class="app-footer">
+      <strong>Luis Ricardo</strong> · © 2026 · Todos os direitos reservados.
+    </footer>
+
+  <nav class="bottom">
+    <button class="nav-btn active" data-nav="home"><span class="ico">⌂</span>Início</button>
+    <button class="nav-btn" data-nav="all"><span class="ico">☷</span>Entregas</button>
+    <button class="nav-btn" data-nav="new"><span class="ico">＋</span>Nova</button>
+    <button class="nav-btn" id="bottomMore"><span class="ico">⋯</span>Mais</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="profileModal">
+  <div class="modal">
+    <h3>👤 Dados do entregador</h3>
+    <p>Seu nome fica salvo somente neste aparelho para aparecer na tela inicial.</p>
+    <input class="input" id="profileNameInput" placeholder="Nome do entregador">
+    <div class="modal-actions">
+      <button class="secondary" id="cancelProfile">Cancelar</button>
+      <button class="primary" id="saveProfile" style="padding:12px">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="aboutModal">
+  <div class="modal">
+    <h3>📦 EntregasBox</h3>
+    <p>Um controle simples para registrar endereço, valor, data e localização das entregas. Os lançamentos ficam salvos neste aparelho.</p>
+    <p style="margin-bottom:0">Desenvolvido para facilitar a conferência das entregas no fim do dia.</p>
+    <div class="modal-actions">
+      <button class="primary" id="closeAbout" style="padding:12px">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+ crossorigin=""></script>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'entregasbox_entregas_v1';
+  const PROFILE_KEY = 'entregasbox_perfil_v1';
+
+  let deliveries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+  let newMap, detailMap, newMarker, detailMarker, currentDetailId = null, currentCoords = null;
+
+  const $ = id => document.getElementById(id);
+  const screens = {
+    home: $('homeScreen'), new: $('newScreen'), all: $('allScreen'), details: $('detailsScreen')
+  };
+
+  function money(v){
+    return Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  }
+  function parseMoney(v){
+    if(!v) return 0;
+    let s = String(v).replace(/[^\d,.-]/g,'').trim();
+    if(s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
+    else s = s.replace(',','.');
+    const n = Number(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function nowText(){
+    const d = new Date();
+    return d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  }
+  function todayKey(){
+    const d = new Date();
+    return d.toLocaleDateString('en-CA');
+  }
+  function dateOnly(d){
+    return new Date(d).toLocaleDateString('pt-BR');
+  }
+  function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(deliveries)); }
+  function showToast(msg){
+    const t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>t.classList.remove('show'),2400);
+  }
+
+  function setActiveNav(name){
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    const map={home:0,all:1,new:2};
+    if(map[name]!==undefined) document.querySelectorAll('.nav-btn')[map[name]].classList.add('active');
+  }
+  function refreshMapSize(map){
+    if(!map) return;
+    const refresh=()=>{
+      try{
+        const el=map.getContainer();
+        if(el){ el.style.width='100%'; el.style.height='100%'; }
+        map.invalidateSize({pan:false,animate:false});
+        map.eachLayer(layer=>{ if(layer instanceof L.TileLayer) layer.redraw(); });
+      }catch(e){}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(refresh));
+    [80,180,350,700,1200,2000].forEach(ms=>setTimeout(refresh,ms));
+  }
+
+  function showScreen(name){
+    Object.values(screens).forEach(s=>s.classList.remove('active'));
+    screens[name].classList.add('active');
+    if(name==='home'){ setActiveNav('home'); renderHome(); }
+    if(name==='new'){ setActiveNav('new'); prepareNew(); setTimeout(()=>{ initMaps(); refreshMapSize(newMap); },60); }
+    if(name==='all'){ setActiveNav('all'); renderAll(); }
+    if(name==='details'){ setActiveNav('all'); setTimeout(()=>{ initMaps(); refreshMapSize(detailMap); },60); }
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+
+  function renderProfile(){
+    const name = profile.name || 'Entregador';
+    $('helloName').textContent = 'Olá, ' + name.split(' ')[0] + '!';
+    $('driverNameLine').textContent = profile.name ? 'Entregador: ' + profile.name : 'Cadastre seu nome para começar.';
+  }
+
+  function renderDate(){
+    const d=new Date();
+    $('todayDate').textContent=d.toLocaleDateString('pt-BR');
+    $('todayDay').textContent=d.toLocaleDateString('pt-BR',{weekday:'long'});
+  }
+
+  function renderHome(){
+    renderProfile(); renderDate();
+    const today=deliveries.filter(x=>x.dayKey===todayKey());
+    $('todayCount').textContent=today.length;
+    $('todayTotal').textContent=money(today.reduce((a,b)=>a+Number(b.amount||0),0));
+    const list = deliveries.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,8);
+    $('recentList').innerHTML = list.length ? list.map(cardHTML).join('') :
+      '<div class="empty">📦<br><strong>Nenhuma entrega ainda.</strong><br>Toque em “Nova Entrega” para começar.</div>';
+  }
+
+  function cardHTML(x){
+    return `<div class="delivery-card" data-id="${x.id}">
+      <div class="pin">📍</div>
+      <div>
+        <h3>${escapeHTML(x.address)}</h3>
+        <p>📅 ${dateOnly(x.createdAt)} · ${new Date(x.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+      </div>
+      <div>
+        <div class="amount">${money(x.amount)}</div>
+        <div class="time">›</div>
+      </div>
+    </div>`;
+  }
+
+  function renderAll(){
+    const q=($('filterInput').value||'').toLowerCase().trim();
+    const arr=deliveries.slice().sort((a,b)=>b.createdAt-a.createdAt).filter(x=>x.address.toLowerCase().includes(q));
+    $('allList').innerHTML=arr.length ? arr.map(x=>`
+      <div class="delivery-card" data-id="${x.id}">
+        <div class="pin" style="background:#fff1df;color:var(--orange)">📍</div>
+        <div>
+          <h3>${escapeHTML(x.address)}</h3>
+          <p>📅 ${dateOnly(x.createdAt)} · ${new Date(x.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+        </div>
+        <div>
+          <div class="amount">${money(x.amount)}</div>
+          <button class="delete" data-delete="${x.id}" aria-label="Excluir">🗑</button>
+        </div>
+      </div>`).join('') :
+      '<div class="empty">Nenhuma entrega encontrada.</div>';
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  }
+
+  function initMaps(){
+    if(!window.L) return false;
+    try{
+      if(!newMap){
+        const el=$('newMap');
+        if(!el) return false;
+        el.style.display='block';
+        el.style.width='100%';
+        el.style.height='275px';
+        newMap=L.map(el,{zoomControl:false}).setView([-23.355,-47.856],13);
+        L.control.zoom({position:'topright'}).addTo(newMap);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+          maxZoom:19,attribution:'© OpenStreetMap'
+        }).addTo(newMap);
+      }
+      if(!detailMap){
+        const el2=$('detailMap');
+        if(el2){
+          el2.style.display='block';
+          el2.style.width='100%';
+          el2.style.height='230px';
+          detailMap=L.map(el2,{zoomControl:false}).setView([-23.355,-47.856],13);
+          L.control.zoom({position:'topright'}).addTo(detailMap);
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+            maxZoom:19,attribution:'© OpenStreetMap'
+          }).addTo(detailMap);
+        }
+      }
+      return true;
+    }catch(e){
+      console.error('Erro ao iniciar mapa:',e);
+      return false;
+    }
+  }
+
+  function prepareNew(){
+    $('dateInput').value=nowText();
+    if(!$('addressInput').value) currentCoords=null;
+    refreshMapSize(newMap);
+  }
+
+  async function geocodeAddress(){
+    const address=$('addressInput').value.trim();
+    if(!address){ showToast('Digite o endereço primeiro.'); return; }
+    showToast('Localizando endereço...');
+    try{
+      const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&q='+encodeURIComponent(address);
+      const res=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});
+      const data=await res.json();
+      if(!data.length){ showToast('Endereço não encontrado.'); return; }
+      const lat=Number(data[0].lat), lon=Number(data[0].lon);
+      currentCoords={lat,lon};
+      if(newMap){
+        newMap.setView([lat,lon],17);
+        refreshMapSize(newMap);
+        if(newMarker) newMap.removeLayer(newMarker);
+        newMarker=L.marker([lat,lon]).addTo(newMap).bindPopup(escapeHTML(data[0].display_name)).openPopup();
+      }
+      showToast('Endereço localizado no mapa.');
+    }catch(e){
+      showToast('Não foi possível localizar agora. Confira sua internet.');
+    }
+  }
+
+  function locateMe(){
+    if(!navigator.geolocation){ showToast('Seu aparelho não liberou localização.'); return; }
+    showToast('Obtendo sua localização...');
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const {latitude:lat,longitude:lon}=pos.coords;
+      currentCoords={lat,lon};
+      if(newMap){
+        newMap.setView([lat,lon],17);
+        refreshMapSize(newMap);
+        if(newMarker) newMap.removeLayer(newMarker);
+        newMarker=L.marker([lat,lon]).addTo(newMap).bindPopup('Sua localização').openPopup();
+      }
+      showToast('Localização encontrada.');
+    },()=>showToast('Não foi possível obter sua localização.'));
+  }
+
+  function openMaps(lat,lon,address){
+    const url = (lat && lon)
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    window.open(url,'_blank');
+  }
+
+  function saveDelivery(){
+    const address=$('addressInput').value.trim();
+    const amount=parseMoney($('amountInput').value);
+    if(!address){ showToast('Informe o endereço.'); return; }
+    if(amount<=0){ showToast('Informe o valor da entrega.'); return; }
+
+    const item={
+      id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      address, amount,
+      lat: currentCoords?.lat ?? null,
+      lon: currentCoords?.lon ?? null,
+      createdAt: Date.now(),
+      dayKey: todayKey()
+    };
+    deliveries.push(item); saveData();
+    $('addressInput').value=''; $('amountInput').value=''; currentCoords=null;
+    if(newMarker && newMap){newMap.removeLayer(newMarker);newMarker=null}
+    showToast('Entrega salva!');
+    renderHome();
+    showScreen('home');
+  }
+
+  function openDetails(id){
+    const x=deliveries.find(d=>d.id===id); if(!x) return;
+    currentDetailId=id;
+    $('detailAddress').textContent=x.address;
+    $('detailMeta').textContent='📅 '+dateOnly(x.createdAt)+' · '+new Date(x.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    $('detailAmount').textContent=money(x.amount);
+    if(detailMap){
+      const lat=x.lat ?? -23.355, lon=x.lon ?? -47.856;
+      detailMap.setView([lat,lon], x.lat ? 17 : 13);
+      if(detailMarker) detailMap.removeLayer(detailMarker);
+      detailMarker=L.marker([lat,lon]).addTo(detailMap).bindPopup(escapeHTML(x.address)).openPopup();
+    }
+    $('detailOpenMaps').onclick=()=>openMaps(x.lat,x.lon,x.address);
+    showScreen('details');
+  }
+
+  function deleteDelivery(id){
+    const x=deliveries.find(d=>d.id===id); if(!x) return;
+    if(!confirm('Excluir esta entrega?')) return;
+    deliveries=deliveries.filter(d=>d.id!==id); saveData();
+    showToast('Entrega excluída.');
+    if(screens.details.classList.contains('active')) showScreen('all'); else renderAll();
+    renderHome();
+  }
+
+  function exportCSV(){
+    if(!deliveries.length){ showToast('Não há entregas para exportar.'); return; }
+    const rows=[['Data','Hora','Endereço','Valor','Latitude','Longitude']];
+    deliveries.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(x=>{
+      const d=new Date(x.createdAt);
+      rows.push([d.toLocaleDateString('pt-BR'),d.toLocaleTimeString('pt-BR'),x.address,money(x.amount),x.lat??'',x.lon??'']);
+    });
+    const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='entregasbox_'+todayKey()+'.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+    showToast('Arquivo CSV preparado.');
+  }
+
+  async function shareApp(){
+    const shareData={
+      title:'EntregasBox',
+      text:'Conheça o EntregasBox — um jeito simples de registrar suas entregas, endereços e valores.',
+      url:location.href
+    };
+    try{
+      if(navigator.share) await navigator.share(shareData);
+      else{
+        await navigator.clipboard.writeText(location.href);
+        showToast('Link do app copiado.');
+      }
+    }catch(e){}
+  }
+
+  // Events
+  $('newDeliveryBtn').onclick=()=>showScreen('new');
+  $('backFromNew').onclick=()=>showScreen('home');
+  $('backFromAll').onclick=()=>showScreen('home');
+  $('backFromDetails').onclick=()=>showScreen('all');
+  $('seeAllBtn').onclick=()=>showScreen('all');
+  $('saveDeliveryBtn').onclick=saveDelivery;
+  $('searchAddressBtn').onclick=geocodeAddress;
+  $('locateMeBtn').onclick=locateMe;
+  $('openMapsBtn').onclick=()=>openMaps(currentCoords?.lat,currentCoords?.lon,$('addressInput').value.trim());
+  $('exportBtn').onclick=exportCSV;
+  $('exportMenuBtn').onclick=()=>{ $('menu').classList.remove('show'); exportCSV(); };
+  $('filterInput').oninput=renderAll;
+  $('detailDelete').onclick=()=>deleteDelivery(currentDetailId);
+  $('shareAppBtn').onclick=shareApp;
+
+  $('menuBtn').onclick=()=> $('menu').classList.toggle('show');
+  $('bottomMore').onclick=()=> $('menu').classList.toggle('show');
+  document.addEventListener('click',e=>{
+    if(!$('menu').contains(e.target) && e.target!==$('menuBtn') && e.target!==$('bottomMore')) $('menu').classList.remove('show');
+  });
+
+  $('editProfileBtn').onclick=()=>{
+    $('menu').classList.remove('show');
+    $('profileNameInput').value=profile.name||'';
+    $('profileModal').classList.add('show');
+  };
+  $('cancelProfile').onclick=()=>$('profileModal').classList.remove('show');
+  $('saveProfile').onclick=()=>{
+    const name=$('profileNameInput').value.trim();
+    if(!name){showToast('Digite seu nome.');return}
+    profile={name}; localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));
+    $('profileModal').classList.remove('show'); renderHome(); showToast('Dados salvos.');
+  };
+
+  $('allDeliveriesBtn').onclick=()=>{ $('menu').classList.remove('show'); showScreen('all'); };
+  $('aboutBtn').onclick=()=>{ $('menu').classList.remove('show'); $('aboutModal').classList.add('show'); };
+  $('closeAbout').onclick=()=>$('aboutModal').classList.remove('show');
+
+  document.querySelectorAll('.nav-btn[data-nav]').forEach(btn=>{
+    btn.onclick=()=>showScreen(btn.dataset.nav);
+  });
+
+  document.addEventListener('click',e=>{
+    const card=e.target.closest('.delivery-card');
+    if(card && !e.target.closest('[data-delete]')) openDetails(card.dataset.id);
+    const del=e.target.closest('[data-delete]');
+    if(del){ e.stopPropagation(); deleteDelivery(del.dataset.delete); }
+  });
+
+  $('amountInput').addEventListener('input',e=>{
+    let raw=e.target.value.replace(/[^\d,]/g,'');
+    if(raw) e.target.value='R$ '+raw;
+  });
+
+  // initial
+  renderHome();
+  setTimeout(()=>{ if(screens.new.classList.contains('active') || screens.details.classList.contains('active')){ initMaps(); refreshMapSize(newMap); refreshMapSize(detailMap); } },250);
+  window.addEventListener('resize',()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); });
+  window.addEventListener('orientationchange',()=>setTimeout(()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); },150));
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ refreshMapSize(newMap); refreshMapSize(detailMap); } });
+  window.addEventListener('pageshow',()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); });
+  if(window.ResizeObserver){
+    const ro=new ResizeObserver(()=>{ refreshMapSize(newMap); refreshMapSize(detailMap); });
+    window.addEventListener('load',()=>{
+      document.querySelectorAll('.mapbox').forEach(el=>ro.observe(el));
+    });
+  }
+
+  // First-use profile prompt
+  if(!profile.name){
+    setTimeout(()=>$('profileModal').classList.add('show'),500);
+  }
+})();
+</script>
+</body>
+</html>
