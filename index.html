@@ -33,12 +33,19 @@ button{cursor:pointer}
 .brand h1 span{color:#ff9a14}
 .brand p{margin:5px 0 0;font-size:12px;opacity:.88}
 .icon-btn{width:40px;height:40px;border:0;border-radius:13px;background:rgba(255,255,255,.15);color:#fff;display:grid;place-items:center;font-size:20px}
-.icon-btn:active,.primary:active,.secondary:active,.danger:active,.route-btn:active{transform:scale(.98)}
+.icon-btn:active,.primary:active,.secondary:active,.danger:active,.route-btn:active,.mini-btn:active{transform:scale(.96)}
 .content{padding:14px 14px 96px}
 .mini-greeting{font-size:13px;color:var(--muted);margin:2px 3px 12px;font-weight:600}
-.night-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--line)}
+.greet-row{display:flex;align-items:center;gap:7px;margin:2px 3px 12px}
+.greet-row .mini-greeting{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.greet-edit{flex:none;width:30px;height:30px;border:1px solid #cfe0f5;background:#edf5ff;border-radius:9px;font-size:14px;padding:0;display:grid;place-items:center}
+.greet-edit:active{transform:scale(.94)}
+.night-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--line)}
 .night-row:last-child{border-bottom:0}
 .night-row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.night-right{display:flex;align-items:center;gap:6px;flex:none}
+.mini-btn{width:34px;height:34px;border:1px solid #cfe0f5;background:#edf5ff;border-radius:10px;font-size:15px;display:grid;place-items:center;padding:0}
+.mini-btn.del{border-color:#ffcaca;background:#fff2f2}
 .night-empty{font-size:12px;color:var(--muted);padding:4px 0 8px}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px}
@@ -162,7 +169,10 @@ button{cursor:pointer}
   <main class="content">
     <!-- INÍCIO -->
     <section class="screen active" id="homeScreen">
-      <div class="mini-greeting" id="miniGreeting">Olá, Entregador!</div>
+      <div class="greet-row">
+        <div class="mini-greeting" id="miniGreeting">Olá!</div>
+        <button class="greet-edit" id="editGreetingBtn" aria-label="Editar nome da saudação">✏️</button>
+      </div>
 
       <div class="stats">
         <div class="stat"><div class="stat-icon">📦</div><div><b id="todayCount">0</b><span>Entregas hoje</span></div></div>
@@ -286,7 +296,7 @@ button{cursor:pointer}
   <footer class="app-footer">
     Desenvolvido por <strong>Luís Ricardo de Almeida Siqueira</strong><br>
     © 2026 Luís Ricardo de Almeida Siqueira — Todos os direitos reservados.<br>
-    <span id="appVersion">Versão 2.1 · Mapbox</span>
+    <span id="appVersion">Versão 2.4 · Mapbox</span>
   </footer>
 
   <nav class="bottom">
@@ -303,7 +313,7 @@ button{cursor:pointer}
   <div class="modal">
     <h3>👤 Dados do entregador</h3>
     <p>Seu nome fica salvo somente neste aparelho para aparecer na tela inicial.</p>
-    <input class="input" id="profileNameInput" placeholder="Nome do entregador">
+    <input class="input" id="profileNameInput" placeholder="Nome do entregador (opcional)">
     <p style="margin-top:14px;margin-bottom:6px">
       <strong style="font-size:13px">💰 Valor padrão da entrega</strong>
       <span class="opt">(opcional)</span>
@@ -319,13 +329,26 @@ button{cursor:pointer}
 
 <div class="modal-backdrop" id="nightCloseModal">
   <div class="modal">
-    <h3>💵 Valor recebido à noite</h3>
+    <h3 id="nightCloseTitle">💵 Valor recebido à noite</h3>
     <p id="nightCloseAutoInfo">Soma automática das entregas marcadas hoje: R$ 0,00</p>
-    <p>Se quiser somar algo a mais (gorjeta, ajuste, etc.), digite abaixo. Deixe em branco se não houver nada extra.</p>
-    <input class="input" id="nightCloseInput" inputmode="decimal" placeholder="R$ 0,00 (extra, opcional)">
+    <p id="nightCloseHelp">Se quiser somar algo a mais (gorjeta, ajuste, etc.), digite abaixo. Deixe em branco se não houver nada extra.</p>
+    <input class="input" id="nightCloseInput" inputmode="decimal" enterkeyhint="done" placeholder="R$ 0,00 (extra, opcional)">
     <div class="modal-actions">
       <button class="secondary" id="cancelNightClose">Cancelar</button>
+      <button class="danger" id="deleteNightClose" style="display:none">🗑 Apagar</button>
       <button class="primary" id="saveNightClose" style="padding:12px">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="greetingModal">
+  <div class="modal">
+    <h3>✏️ Como quer ser chamado?</h3>
+    <p>Escreva seu nome, apelido ou o que preferir. Fica salvo só neste aparelho. Deixe em branco para aparecer apenas "Olá!".</p>
+    <input class="input" id="greetingInput" maxlength="30" enterkeyhint="done" autocomplete="nickname" placeholder="Ex.: Luís, Motoca, Chefe...">
+    <div class="modal-actions">
+      <button class="secondary" id="cancelGreeting">Cancelar</button>
+      <button class="primary" id="saveGreeting" style="padding:12px">Salvar</button>
     </div>
   </div>
 </div>
@@ -334,7 +357,7 @@ button{cursor:pointer}
   <div class="modal">
     <h3>📦 EntregasBox</h3>
     <p>Registra endereço, valor, data e localização das entregas, e mostra no mapa a rota da sua posição até o cliente, com distância e tempo. Os lançamentos ficam salvos neste aparelho.</p>
-    <p style="margin-bottom:0">Desenvolvido por Luís Ricardo de Almeida Siqueira.<br>Versão 2.1 · setembro de 2026</p>
+    <p style="margin-bottom:0">Desenvolvido por Luís Ricardo de Almeida Siqueira.<br>Versão 2.4 · setembro de 2026</p>
     <div class="modal-actions"><button class="primary" id="closeAbout" style="padding:12px">Fechar</button></div>
   </div>
 </div>
@@ -406,9 +429,9 @@ button{cursor:pointer}
 
   // ===== telas =====
   function renderProfile(){
-    const name=profile.name||'Entregador';
     const dia=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
-    $('miniGreeting').textContent='Olá, '+name.split(' ')[0]+'! · '+dia;
+    const nome=(profile.name||'').trim();
+    $('miniGreeting').textContent=(nome?'Olá, '+nome+'!':'Olá!')+' · '+dia;
   }
   function renderNightClose(){
     const todays=deliveries.filter(x=>x.dayKey===todayKey() && x.fixedValue>0)
@@ -421,9 +444,19 @@ button{cursor:pointer}
       rows='<div class="night-empty">Nenhum valor fixo lançado hoje ainda.</div>';
     } else {
       rows=todays.map(x=>`<div class="night-row"><span>${hourOnly(x.createdAt)} · ${escapeHTML(x.address)}</span><span>${money(x.fixedValue)}</span></div>`).join('');
-      if(extra>0) rows+=`<div class="night-row"><span>Extra somado</span><span>${money(extra)}</span></div>`;
+      if(extra>0) rows+=`<div class="night-row"><span>Extra somado</span>
+        <span class="night-right">${money(extra)}
+          <button class="mini-btn" id="editExtraBtn" aria-label="Editar valor extra">✏️</button>
+          <button class="mini-btn del" id="delExtraBtn" aria-label="Apagar valor extra">🗑</button>
+        </span></div>`;
     }
     $('nightCloseList').innerHTML=rows;
+    // O botão de baixo muda de texto: somar (quando não tem) ou editar (quando já tem)
+    $('addNightExtraBtn').textContent = extra>0 ? '✏️ Editar valor extra' : '+ Somar valor extra';
+    if(extra>0){
+      $('editExtraBtn').onclick=openNightCloseModal;
+      $('delExtraBtn').onclick=deleteNightExtra;
+    }
     return auto+extra;
   }
   function cardHTML(x, withDelete){
@@ -752,39 +785,53 @@ button{cursor:pointer}
     $('menu').classList.remove('show');
     showToast('Procurando atualização…');
     try{
-      // Se houver service worker registrado (PWA instalado), força buscar a versão nova
       if('serviceWorker' in navigator){
         const regs=await navigator.serviceWorker.getRegistrations();
         for(const r of regs){ try{ await r.update(); await r.unregister(); }catch(e){} }
       }
-      // Limpa qualquer cache guardado pelo navegador/PWA
       if('caches' in window){
         const keys=await caches.keys();
         await Promise.all(keys.map(k=>caches.delete(k)));
       }
-    }catch(e){
-      // segue mesmo se algo falhar aqui
-    }
-    // Recarrega a página ignorando o cache, buscando a versão mais recente do servidor
+    }catch(e){}
     const url=new URL(location.href);
     url.searchParams.set('_v', Date.now());
     location.replace(url.toString());
   }
 
+  // ===== valor extra da noite: somar, editar, apagar =====
   function openNightCloseModal(){
     const auto=autoSumFixedToday();
-    $('nightCloseAutoInfo').textContent='Soma automática das entregas marcadas hoje: '+money(auto);
     const val=nightCloses[todayKey()];
-    $('nightCloseInput').value=(val && val>0)?money(val):'';
+    const editing = val && val>0;
+    $('nightCloseTitle').textContent = editing ? '✏️ Editar valor extra' : '💵 Valor recebido à noite';
+    $('nightCloseAutoInfo').textContent='Soma automática das entregas marcadas hoje: '+money(auto);
+    $('nightCloseHelp').textContent = editing
+      ? 'Valor extra lançado hoje: '+money(val)+'. Digite o valor certo abaixo — ele substitui o anterior.'
+      : 'Se quiser somar algo a mais (gorjeta, ajuste, etc.), digite abaixo. Deixe em branco se não houver nada extra.';
+    $('nightCloseInput').value = editing ? money(val) : '';
+    $('deleteNightClose').style.display = editing ? 'block' : 'none';
     $('nightCloseModal').classList.add('show');
+    // seleciona o valor, assim é só digitar o novo por cima
+    setTimeout(()=>{ try{ $('nightCloseInput').focus(); $('nightCloseInput').select(); }catch(e){} },150);
   }
   function saveNightClose(){
     const val=parseMoney($('nightCloseInput').value);
+    const had=Number(nightCloses[todayKey()]||0)>0;
     if(val>0) nightCloses[todayKey()]=val; else delete nightCloses[todayKey()];
     saveNightCloses();
     $('nightCloseModal').classList.remove('show');
-    renderNightClose();
-    showToast(val>0?'Valor extra salvo.':'Valor extra removido.');
+    renderHome();
+    showToast(val>0 ? (had?'Valor extra atualizado.':'Valor extra salvo.') : 'Valor extra removido.');
+  }
+  function deleteNightExtra(){
+    if(!nightCloses[todayKey()]) return;
+    if(!confirm('Apagar o valor extra de hoje ('+money(nightCloses[todayKey()])+')?')) return;
+    delete nightCloses[todayKey()];
+    saveNightCloses();
+    $('nightCloseModal').classList.remove('show');
+    renderHome();
+    showToast('Valor extra apagado.');
   }
 
   // ===== eventos =====
@@ -806,6 +853,8 @@ button{cursor:pointer}
   $('addNightExtraBtn').onclick=openNightCloseModal;
   $('cancelNightClose').onclick=()=>$('nightCloseModal').classList.remove('show');
   $('saveNightClose').onclick=saveNightClose;
+  $('deleteNightClose').onclick=deleteNightExtra;
+  $('nightCloseInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); saveNightClose(); } });
   $('nightCloseInput').addEventListener('input',maskMoneyInput);
   $('fixedValueInput').addEventListener('input',maskMoneyInput);
   $('fixedValueCheck').addEventListener('change',e=>{
@@ -828,11 +877,29 @@ button{cursor:pointer}
     $('profileDefaultAmountInput').value=profile.valorPadrao?money(profile.valorPadrao):'';
     $('profileModal').classList.add('show');
   };
+  // lápis da saudação: nome opcional, livre
+  function openGreeting(){
+    $('greetingInput').value=profile.name||'';
+    $('greetingModal').classList.add('show');
+    setTimeout(()=>{ try{ $('greetingInput').focus(); $('greetingInput').select(); }catch(e){} },150);
+  }
+  function saveGreeting(){
+    const nome=$('greetingInput').value.trim().slice(0,30);
+    profile={...profile, name:nome};
+    try{ localStorage.setItem(PROFILE_KEY,JSON.stringify(profile)); }catch(e){}
+    $('greetingModal').classList.remove('show');
+    renderProfile();
+    showToast(nome?'Pronto, '+nome+'!':'Saudação voltou para "Olá!".');
+  }
+  $('editGreetingBtn').onclick=openGreeting;
+  $('cancelGreeting').onclick=()=>$('greetingModal').classList.remove('show');
+  $('saveGreeting').onclick=saveGreeting;
+  $('greetingInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); saveGreeting(); } });
+
   $('cancelProfile').onclick=()=>$('profileModal').classList.remove('show');
   $('saveProfile').onclick=()=>{
     const name=$('profileNameInput').value.trim();
-    if(!name){ showToast('Digite seu nome.'); return; }
-    const valorPadrao=parseMoney($('profileDefaultAmountInput').value); // 0 se ficar em branco/for inválido
+    const valorPadrao=parseMoney($('profileDefaultAmountInput').value);
     profile={name, valorPadrao: valorPadrao>0?valorPadrao:0};
     try{ localStorage.setItem(PROFILE_KEY,JSON.stringify(profile)); }catch(e){}
     $('profileModal').classList.remove('show'); renderHome(); showToast('Dados salvos.');
@@ -850,8 +917,8 @@ button{cursor:pointer}
     if(card) openDetails(card.dataset.id);
   });
 
-  // Máscara de dinheiro: os dígitos digitados viram centavos, e a vírgula
-  // dos decimais aparece sozinha (ex.: digitar 4000 -> R$ 40,00)
+  // Máscara de dinheiro: os dígitos digitados viram centavos
+  // (ex.: digitar 4000 -> R$ 40,00)
   function maskMoneyInput(e){
     const digits=e.target.value.replace(/\D/g,'');
     if(!digits){ e.target.value=''; return; }
@@ -863,7 +930,6 @@ button{cursor:pointer}
 
   // início
   renderHome();
-  if(!profile.name) setTimeout(()=>$('profileModal').classList.add('show'),500);
 })();
 </script>
 </body>
